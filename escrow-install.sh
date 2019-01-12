@@ -1,16 +1,16 @@
 #!/bin/bash
 
 TMP_FOLDER=$(mktemp -d)
-CONFIG_FILE='Escrow.conf'
-CONFIGFOLDER='/root/.Escrow'
+CONFIG_FILE='escrow.conf'
+CONFIGFOLDER='/root/.escrow'
 COIN_DAEMON='escrowd'
 COIN_CLI='escrow-cli'
 COIN_PATH='/usr/local/bin/'
 COIN_TGZ='https://github.com/renskky/escrow/releases/download/2.0/escrow.tar.gz'
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
-COIN_NAME='Escrow'
-COIN_PORT=8018
-#RPC_PORT=7119
+COIN_NAME='escrow'
+COIN_PORT=12929
+RPC_PORT=12928
 
 NODEIP=$(curl -s4 api.ipify.org)
 
@@ -27,7 +27,7 @@ function download_node() {
   compile_error
   tar xvzf $COIN_ZIP
   chmod +x $COIN_DAEMON
-  cp $COIN_DAEMON $COIN_PATH
+  cp escrow* /usr/local/bin
   cd ~ >/dev/null 2>&1
   rm -rf $TMP_FOLDER >/dev/null 2>&1
   clear
