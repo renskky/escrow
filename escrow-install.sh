@@ -6,7 +6,7 @@ CONFIGFOLDER='/root/.escrow'
 COIN_DAEMON='escrowd'
 COIN_CLI='escrow-cli'
 COIN_PATH='/usr/local/bin/'
-COIN_TGZ='https://github.com/renskky/escrow/releases/download/2.0/escrow.tar.gz'
+COIN_REPO='https://github.com/renskky/escrow/releases/download/2.0/escrow.tar.gz'
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
 COIN_NAME='escrow'
 COIN_PORT=12929
@@ -23,9 +23,9 @@ NC='\033[0m'
 function download_node() {
   echo -e "Prepare to download ${GREEN}$COIN_NAME${NC}."
    cd $TMP_FOLDER
-  wget -q $COIN_TGZ
+  wget -q $COIN_REPO
   compile_error
-   COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
+   COIN_ZIP=$(echo $COIN_REPO | awk -F'/' '{print $NF}')
   tar xvzf $COIN_ZIP >/dev/null 2>&1
   compile_error
   cp escrow* /usr/local/bin
