@@ -25,7 +25,7 @@ function download_node() {
    cd $TMP_FOLDER
   wget -q $COIN_TGZ
   compile_error
-   COIN_ZIP=$(echo $COIN_REPO | awk -F'/' '{print $NF}')
+   COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
   tar xvzf $COIN_ZIP >/dev/null 2>&1
   compile_error
   cp escrow* /usr/local/bin
