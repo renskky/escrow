@@ -1,16 +1,16 @@
 #!/bin/bash
 
 TMP_FOLDER=$(mktemp -d)
-CONFIG_FILE='escrow.conf'
-CONFIGFOLDER='/root/.escrow'
+CONFIG_FILE='Escrow.conf'
+CONFIGFOLDER='/root/.Escrow'
 COIN_DAEMON='escrowd'
 COIN_CLI='escrow-cli'
 COIN_PATH='/usr/local/bin/'
-COIN_REPO='https://github.com/renskky/escrow/releases/download/2.0/escrow.tar.gz'
+COIN_TGZ='https://github.com/renskky/escrow/releases/download/2.0/escrow.tar.gz'
 COIN_ZIP=$(echo $COIN_TGZ | awk -F'/' '{print $NF}')
-COIN_NAME='escrow'
-COIN_PORT=12929
-RPC_PORT=12928
+COIN_NAME='Escrow'
+COIN_PORT=8018
+#RPC_PORT=7119
 
 NODEIP=$(curl -s4 api.ipify.org)
 
@@ -22,16 +22,13 @@ NC='\033[0m'
 
 function download_node() {
   echo -e "Prepare to download ${GREEN}$COIN_NAME${NC}."
-   cd $TMP_FOLDER
-  wget -q $COIN_REPO
+  cd $TMP_FOLDER >/dev/null 2>&1
+  wget -q $COIN_TGZ
   compile_error
-   COIN_ZIP=$(echo $COIN_REPO | awk -F'/' '{print $NF}')
-  tar xvzf $COIN_ZIP >/dev/null 2>&1
-  compile_error
-  cp escrow* /usr/local/bin
-  compile_error
-  strip $COIN_DAEMON $COIN_CLI
-  cd -
+  tar xvzf $COIN_ZIP
+  chmod +x $COIN_DAEMON
+  cp $COIN_DAEMON $COIN_PATH
+  cd ~ >/dev/null 2>&1
   rm -rf $TMP_FOLDER >/dev/null 2>&1
   clear
 }
@@ -42,19 +39,24 @@ function configure_systemd() {
 [Unit]
 Description=$COIN_NAME service
 After=network.target
+
 [Service]
 User=root
 Group=root
+
 Type=forking
 #PIDFile=$CONFIGFOLDER/$COIN_NAME.pid
+
 ExecStart=$COIN_PATH$COIN_DAEMON -daemon -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER
 ExecStop=-$COIN_PATH$COIN_CLI -conf=$CONFIGFOLDER/$CONFIG_FILE -datadir=$CONFIGFOLDER stop
+
 Restart=always
 PrivateTmp=true
 TimeoutStopSec=60s
 TimeoutStartSec=10s
 StartLimitInterval=120s
 StartLimitBurst=5
+
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -81,7 +83,7 @@ function create_config() {
   cat << EOF > $CONFIGFOLDER/$CONFIG_FILE
 rpcuser=$RPCUSER
 rpcpassword=$RPCPASSWORD
-rpcport=$RPC_PORT
+#rpcport=$RPC_PORT
 rpcallowip=127.0.0.1
 listen=1
 server=1
@@ -92,7 +94,7 @@ EOF
 
 function create_key() {
   echo -e "Enter your ${RED}$COIN_NAME Masternode Private Key${NC}. Leave it blank to generate a new ${RED}Masternode Private Key${NC} for you:"
-  read -e COINKEY
+  read -t 30 -e COINKEY
   if [[ -z "$COINKEY" ]]; then
   $COIN_PATH$COIN_DAEMON -daemon
   sleep 30
@@ -113,33 +115,14 @@ clear
 }
 
 function update_config() {
-  sed -i 's/daemon=1/daemon=1/' $CONFIGFOLDER/$CONFIG_FILE
+  sed -i 's/daemon=1/daemon=0/' $CONFIGFOLDER/$CONFIG_FILE
   cat << EOF >> $CONFIGFOLDER/$CONFIG_FILE
 logintimestamps=1
-maxconnections=16
+maxconnections=256
 #bind=$NODEIP
 masternode=1
-externalip=$NODEIP:$COIN_PORT
+masternodeaddr=$NODEIP:$COIN_PORT
 masternodeprivkey=$COINKEY
-#Nodes
-addnode=83.26.207.134
-addnode=86.13.239.10
-addnode=52.14.73.80
-addnode=194.67.221.206
-addnode=207.148.12.60
-addnode=103.207.39.149
-addnode=108.61.223.28
-addnode=95.181.179.99
-addnode=167.99.159.58
-addnode=195.181.214.34
-addnode=128.199.207.76
-addnode=144.202.27.196
-addnode=144.202.105.136
-addnode=140.82.40.218
-addnode=45.76.46.154
-addnode=104.207.144.21
-addnode=185.250.206.197
-addnode=94.130.250.20
 EOF
 }
 
@@ -205,8 +188,7 @@ fi
 }
 
 function prepare_system() {
-echo -e "Preparing the system to install ${GREEN}$COIN_NAME${NC} master node."
-echo -e "This might take up to 15 minutes and the screen will not move, so please be patient."
+echo -e "Prepare the system to install ${GREEN}$COIN_NAME${NC} master node."
 apt-get update >/dev/null 2>&1
 DEBIAN_FRONTEND=noninteractive apt-get update > /dev/null 2>&1
 DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" -y -qq upgrade >/dev/null 2>&1
